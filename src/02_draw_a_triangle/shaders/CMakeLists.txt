@@ -1,0 +1,32 @@
+set(TARGET_NAME ${SHADER_COMPILE_TARGET})
+
+set(GENERATED_SHADER_FOLDER "generated")
+if (NOT EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${GENERATED_SHADER_FOLDER}/spv)
+    file(MAKE_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/${GENERATED_SHADER_FOLDER}/spv)
+endif()
+
+
+set(working_dir "${CMAKE_CURRENT_SOURCE_DIR}")
+set(SHADERS 
+    ${CMAKE_CURRENT_SOURCE_DIR}/shader.vert
+    ${CMAKE_CURRENT_SOURCE_DIR}/shader.frag)
+SOURCE_GROUP("shaders" FILES ${SHADERS})
+set(ALL_GENERATED_SPV_FILES "")
+
+foreach(SHADER ${SHADERS})
+    get_filename_component(SHADER_NAME ${SHADER} NAME)
+
+    set(SPV_FILE "${CMAKE_CURRENT_SOURCE_DIR}/${GENERATED_SHADER_FOLDER}/spv/${SHADER_NAME}.spv")
+
+    add_custom_command(
+        OUTPUT ${SPV_FILE}
+        COMMAND ${glslangValidator_executable} -V100 -o ${SPV_FILE} ${SHADER}
+        DEPENDS ${SHADER}
+        WORKING_DIRECTORY "${working_dir}"
+    )
+
+    list(APPEND ALL_GENERATED_SPV_FILES ${SPV_FILE})
+endforeach()
+
+add_custom_target(${TARGET_NAME}
+    DEPENDS ${ALL_GENERATED_SPV_FILES} SOURCES ${SHADER})
